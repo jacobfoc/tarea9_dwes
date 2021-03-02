@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Tarea 9</title>
+    <link href="api_test.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+
+    <button onclick="probar()">Pruébalo</button>
+
+    <div id="placeholder">
+    </div>
+
+    <hr>
+
+    <h2>Buscar autores y sus libros</h2>
+    <input type="text" id="libroField"/>
+    <div id="texto">
+    </div>
+
+    <script type="text/javascript">
+      function probar() {
+        var req = new XMLHttpRequest()
+        req.addEventListener("load", handleProbarResponse)
+        req.open("GET", "https://w3.abanico.net/jacob/tarea9/api.php?action=proxy&url=https://datos.madrid.es/egob/catalogo/209426-0-templos-catolicas.json")
+        req.send()
+      }
+
+      function handleProbarResponse() {
+        var content = JSON.parse(this.responseText)["@graph"]
+        for (var k in content) {
+          var tmp = content[k]
+          document.getElementById("placeholder").innerHTML +=
+            "id: " + tmp["id"] + "<br>" +
+            "nombre: " + tmp["title"] + "<br>" +
+            "dirección: " + tmp["address"]["street-address"] + " - " + tmp["address"]["postal-code"] + " " + tmp["address"]["locality"] + "<br><br>"
+        }
+      }
+
+      libroField = document.getElementById("libroField")
+
+      libroField.addEventListener("input", onInput)
+      resultField = document.getElementById("texto")
+
+      // Actualiza los resultados de la búsqueda cada vez que se escribe en el
+      // input.
+      function onInput() {
+        // Si se ha borrado el texto del input, borra los resultados.
+        if (this.value === "") {
+          resultField.innerHTML = ""
+          return
+        }
+
+        // Le pide a una API que le pida a ota API la informacion que queremos.
+        req = new XMLHttpRequest()
+        req.addEventListener("load", handleResponse)
+        req.open("GET", "https://w3.abanico.net/jacob/tarea9/api.php?action=get_lista_todo&str=" + this.value)
+        req.send()
+      }
+
+      function handleResponse() {
+        entries = []
+
+        var autores = JSON.parse(this.responseText)
+        autores.forEach((autor) => {
+          str = ""
+          str += autor["nombre"] + " " + autor["apellidos"] + " (libros: "
+          for (i = 0; i < autor["libros"].length; i++) {
+            var libro = autor["libros"][i]
+            if (i > 0) str += ", "
+            str += libro["titulo"]
+          }
+          str += ")"
+          entries.push(str)
+        })
+
+        resultField.innerHTML = entries.join("<br>")
+      }
+    </script>
+  </body>
+</html>
